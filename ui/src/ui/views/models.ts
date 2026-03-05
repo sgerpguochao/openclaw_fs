@@ -204,15 +204,15 @@ function renderModelsForm(props: ModelsRenderProps) {
             </button>
             <button
               class="btn btn--sm"
-              @click=${() => onModelChange?.("qwen3.5-max")}
+              @click=${() => onModelChange?.("MiniMax-M2.5")}
             >
-              qwen3.5-max
+              MiniMax-M2.5
             </button>
             <button
               class="btn btn--sm"
-              @click=${() => onModelChange?.("qwen-turbo")}
+              @click=${() => onModelChange?.("deepseek-chat")}
             >
-              qwen-turbo
+              deepseek-chat
             </button>
           </div>
         </div>
@@ -257,18 +257,10 @@ function renderModelsForm(props: ModelsRenderProps) {
         <div class="models-status">
           <div class="status-item">
             <span class="status-label">Status:</span>
-            <span class="status-value ${apiKey ? "ok" : "warning"}">
-              ${apiKey ? "Configured" : "Not configured"}
+            <span class="status-value ${apiKey && model ? "ok" : "warning"}">
+              ${apiKey && model ? "Active: " + model : "Not configured"}
             </span>
           </div>
-          ${apiKey && baseUrl && model
-            ? html`
-                <div class="status-item">
-                  <span class="status-label">Ready:</span>
-                  <span class="status-value ok">Model ready to use</span>
-                </div>
-              `
-            : nothing}
         </div>
       </div>
     </div>

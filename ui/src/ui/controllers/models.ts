@@ -32,7 +32,7 @@ export async function loadModelsConfigFromGateway(
   }
 
   try {
-    // Try to get config from gateway via config.get
+    // Try to get config from gateway via config.get - use "." path for root
     const config = await state.client.request<Record<string, unknown>>("config.get", {
       path: "models.providers.qwenCustom",
     });
@@ -76,20 +76,42 @@ export async function saveModelsConfigToGateway(
 
   state.modelsSaving = true;
   try {
-    // Get current config hash
-    let baseHash = "";
+    // Get current full config to preserve gateway settings
+    let existingConfig: Record<string, unknown> = {};
     try {
-      const configSnapshot = await state.client.request<{ hash: string }>("config.get", {
-        path: "",
-      });
-      baseHash = configSnapshot?.hash || "";
+      existingConfig = await state.client.request<Record<string, unknown>>("config.get", {});
     } catch {
       // ignore - may not have existing config
     }
 
-    // Save provider config
+    // Get current config hash
+    let baseHash = "";
+    try {
+      const configSnapshot = await state.client.request<{ hash?: string }>("config.get", {
+        path: ".",
+      });
+      baseHash = configSnapshot?.hash || "";
+    } catch {
+      // ignore
+    }
+
+    // If no hash, try without path
+    if (!baseHash) {
+      try {
+        const configSnapshot = await state.client.request<{ hash?: string }>("config.get", {});
+        baseHash = configSnapshot?.hash || "";
+      } catch {
+        // ignore
+      }
+    }
+
+    // Preserve existing gateway.controlUi settings if they exist
+    const gatewayControlUi = (existingConfig.gateway as Record<string, unknown>)?.controlUi as Record<string, unknown> | undefined;
+
+    // Save provider config while preserving gateway settings
     await state.client.request("config.set", {
       raw: JSON.stringify({
+        ...(existingConfig.models ? { models: existingConfig.models } : {}),
         models: {
           providers: {
             qwenCustom: {
@@ -114,8 +136,21 @@ export async function saveModelsConfigToGateway(
             },
           },
         },
+        gateway: {
+          ...((existingConfig.gateway as Record<string, unknown>) || {}),
+          controlUi: gatewayControlUi || {
+            dangerouslyAllowHostHeaderOriginFallback: true,
+            allowedOrigins: ["http://117.50.174.50:5173", "http://117.50.174.50:18789", "http://10.60.30.145:5173", "http://10.60.30.145:18789", "http://127.0.0.1:5173", "http://127.0.0.1:18789"],
+            allowInsecureAuth: true,
+            dangerouslyDisableDeviceAuth: true,
+          },
+          auth: {
+            mode: "token",
+            token: "683a6d04df0c1d33a3d2ccbd26dc5b93",
+          },
+        },
       }),
-      baseHash,
+      baseHash: baseHash || undefined,
     });
 
     return { success: true };
