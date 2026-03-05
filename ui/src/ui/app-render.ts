@@ -81,6 +81,7 @@ import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
+import { renderModels } from "./views/models.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -914,6 +915,29 @@ export function renderApp(state: AppViewState) {
                 onSaveKey: (key) => saveSkillApiKey(state, key),
                 onInstall: (skillKey, name, installId) =>
                   installSkill(state, skillKey, name, installId),
+              })
+            : nothing
+        }
+
+        ${
+          state.tab === "models"
+            ? renderModels({
+                connected: state.connected,
+                loading: state.modelsLoading ?? false,
+                saving: state.modelsSaving ?? false,
+                apiKey: state.modelsApiKey ?? "",
+                baseUrl: state.modelsBaseUrl ?? "",
+                model: state.modelsModel ?? "",
+                defaultModel: state.modelsDefaultModel ?? "",
+                onReload: () => {
+                  // Trigger models reload
+                },
+                onSave: (config) => {
+                  state.modelsApiKey = config.apiKey;
+                  state.modelsBaseUrl = config.baseUrl;
+                  state.modelsModel = config.model;
+                  state.modelsDefaultModel = config.defaultModel;
+                },
               })
             : nothing
         }
