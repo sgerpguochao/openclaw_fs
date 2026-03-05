@@ -355,6 +355,7 @@ export class OpenClawApp extends LitElement {
   @state() modelsModel = "";
   @state() modelsDefaultModel = "";
   @state() modelsShowApiKey = false;
+  @state() modelsLoadedOnce = false;
 
   @state() debugLoading = false;
   @state() debugStatus: StatusSummary | null = null;

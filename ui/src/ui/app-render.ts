@@ -923,17 +923,26 @@ export function renderApp(state: AppViewState) {
         ${
           state.tab === "models"
             ? (() => {
-                // Auto-load config when tab is opened and no config loaded
-                if (state.connected && !state.modelsLoading && !state.modelsApiKey && !state.modelsBaseUrl) {
-                  setTimeout(async () => {
+                // Auto-load config when tab is opened
+                if (state.connected && !state.modelsLoading) {
+                  // Use a flag to prevent multiple loads
+                  const needsLoad = !state.modelsLoadedOnce && !state.modelsApiKey && !state.modelsBaseUrl;
+                  if (needsLoad) {
                     state.modelsLoading = true;
-                    const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
-                    state.modelsApiKey = config.apiKey;
-                    state.modelsBaseUrl = config.baseUrl;
-                    state.modelsModel = config.model;
-                    state.modelsDefaultModel = config.defaultModel;
-                    state.modelsLoading = false;
-                  }, 0);
+                    // Trigger async load
+                    setTimeout(async () => {
+                      try {
+                        const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
+                        state.modelsApiKey = config.apiKey;
+                        state.modelsBaseUrl = config.baseUrl;
+                        state.modelsModel = config.model;
+                        state.modelsDefaultModel = config.defaultModel;
+                      } finally {
+                        state.modelsLoading = false;
+                        state.modelsLoadedOnce = true;
+                      }
+                    }, 0);
+                  }
                 }
                 return renderModels({
                   connected: state.connected,
@@ -948,14 +957,29 @@ export function renderApp(state: AppViewState) {
                   onToggleShowApiKey: () => {
                     state.modelsShowApiKey = !state.modelsShowApiKey;
                   },
+                  onApiKeyChange: (value: string) => {
+                    state.modelsApiKey = value;
+                  },
+                  onBaseUrlChange: (value: string) => {
+                    state.modelsBaseUrl = value;
+                  },
+                  onModelChange: (value: string) => {
+                    state.modelsModel = value;
+                  },
+                  onDefaultModelChange: (value: string) => {
+                    state.modelsDefaultModel = value;
+                  },
                   onReload: async () => {
                     state.modelsLoading = true;
-                    const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
-                    state.modelsApiKey = config.apiKey;
-                    state.modelsBaseUrl = config.baseUrl;
-                    state.modelsModel = config.model;
-                    state.modelsDefaultModel = config.defaultModel;
-                    state.modelsLoading = false;
+                    try {
+                      const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
+                      state.modelsApiKey = config.apiKey;
+                      state.modelsBaseUrl = config.baseUrl;
+                      state.modelsModel = config.model;
+                      state.modelsDefaultModel = config.defaultModel;
+                    } finally {
+                      state.modelsLoading = false;
+                    }
                   },
                   onSave: async (config) => {
                     state.modelsApiKey = config.apiKey;
