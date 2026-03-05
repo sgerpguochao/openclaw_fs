@@ -63,6 +63,7 @@ import {
   updateSkillEdit,
   updateSkillEnabled,
 } from "./controllers/skills.ts";
+import { loadModelsConfigFromGateway, saveModelsConfigToGateway, type ModelsState } from "./controllers/models.ts";
 import { buildExternalLinkRel, EXTERNAL_LINK_TARGET } from "./external-link.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
@@ -921,24 +922,55 @@ export function renderApp(state: AppViewState) {
 
         ${
           state.tab === "models"
-            ? renderModels({
-                connected: state.connected,
-                loading: state.modelsLoading ?? false,
-                saving: state.modelsSaving ?? false,
-                apiKey: state.modelsApiKey ?? "",
-                baseUrl: state.modelsBaseUrl ?? "",
-                model: state.modelsModel ?? "",
-                defaultModel: state.modelsDefaultModel ?? "",
-                onReload: () => {
-                  // Trigger models reload
-                },
-                onSave: (config) => {
-                  state.modelsApiKey = config.apiKey;
-                  state.modelsBaseUrl = config.baseUrl;
-                  state.modelsModel = config.model;
-                  state.modelsDefaultModel = config.defaultModel;
-                },
-              })
+            ? (() => {
+                // Auto-load config when tab is opened and no config loaded
+                if (state.connected && !state.modelsLoading && !state.modelsApiKey && !state.modelsBaseUrl) {
+                  setTimeout(async () => {
+                    state.modelsLoading = true;
+                    const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
+                    state.modelsApiKey = config.apiKey;
+                    state.modelsBaseUrl = config.baseUrl;
+                    state.modelsModel = config.model;
+                    state.modelsDefaultModel = config.defaultModel;
+                    state.modelsLoading = false;
+                  }, 0);
+                }
+                return renderModels({
+                  connected: state.connected,
+                  loading: state.modelsLoading ?? false,
+                  saving: state.modelsSaving ?? false,
+                  apiKey: state.modelsApiKey ?? "",
+                  baseUrl: state.modelsBaseUrl ?? "",
+                  model: state.modelsModel ?? "",
+                  defaultModel: state.modelsDefaultModel ?? "",
+                  client: state.client,
+                  showApiKey: state.modelsShowApiKey,
+                  onToggleShowApiKey: () => {
+                    state.modelsShowApiKey = !state.modelsShowApiKey;
+                  },
+                  onReload: async () => {
+                    state.modelsLoading = true;
+                    const config = await loadModelsConfigFromGateway(state as unknown as ModelsState);
+                    state.modelsApiKey = config.apiKey;
+                    state.modelsBaseUrl = config.baseUrl;
+                    state.modelsModel = config.model;
+                    state.modelsDefaultModel = config.defaultModel;
+                    state.modelsLoading = false;
+                  },
+                  onSave: async (config) => {
+                    state.modelsApiKey = config.apiKey;
+                    state.modelsBaseUrl = config.baseUrl;
+                    state.modelsModel = config.model;
+                    state.modelsDefaultModel = config.defaultModel;
+                    const result = await saveModelsConfigToGateway(state as unknown as ModelsState, config);
+                    if (!result.success) {
+                      alert("Failed to save: " + result.error);
+                    } else {
+                      alert("Saved successfully!");
+                    }
+                  },
+                });
+              })()
             : nothing
         }
 

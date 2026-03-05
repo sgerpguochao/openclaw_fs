@@ -1,16 +1,6 @@
 import { html, nothing } from "lit";
 import { t } from "../i18n/index.ts";
-
-export type ModelsViewState = {
-  connected: boolean;
-  loading: boolean;
-  saving: boolean;
-  apiKey: string;
-  baseUrl: string;
-  model: string;
-  defaultModel: string;
-  showApiKey: boolean;
-};
+import type { GatewayBrowserClient } from "./gateway.ts";
 
 export type ModelsRenderProps = {
   connected: boolean;
@@ -21,6 +11,7 @@ export type ModelsRenderProps = {
   model: string;
   defaultModel: string;
   showApiKey?: boolean;
+  client?: GatewayBrowserClient | null;
   onReload?: () => void;
   onSave?: (config: {
     apiKey: string;
@@ -34,6 +25,75 @@ export type ModelsRenderProps = {
   onDefaultModelChange?: (value: string) => void;
   onToggleShowApiKey?: () => void;
 };
+
+// Load model config from localStorage
+export async function loadModelsConfig(): Promise<{
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  defaultModel: string;
+}> {
+  const stored = localStorage.getItem("openclaw-model-config");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      // ignore
+    }
+  }
+  return { apiKey: "", baseUrl: "", model: "", defaultModel: "" };
+}
+
+// Save model config to localStorage and gateway
+export async function saveModelsConfig(
+  config: { apiKey: string; baseUrl: string; model: string; defaultModel: string },
+  client?: GatewayBrowserClient | null,
+): Promise<{ success: boolean; error?: string }> {
+  // Save to localStorage
+  localStorage.setItem("openclaw-model-config", JSON.stringify(config));
+
+  if (!client || !client.connected) {
+    return { success: true };
+  }
+
+  try {
+    // Save provider config via gateway
+    if (config.apiKey) {
+      await client.request("config.set", {
+        raw: JSON.stringify({
+          models: {
+            providers: {
+              qwenCustom: {
+                apiKey: config.apiKey,
+                baseUrl: config.baseUrl,
+                api: "openai-completions",
+                models: [
+                  {
+                    id: config.model,
+                    name: config.model,
+                    contextWindow: 128000,
+                    maxTokens: 8192,
+                  },
+                ],
+              },
+            },
+          },
+          agents: {
+            defaults: {
+              model: {
+                primary: config.defaultModel ? `qwenCustom/${config.model}` : "",
+              },
+            },
+          },
+        }),
+        baseHash: "",
+      });
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
 
 function renderModelsForm(props: ModelsRenderProps) {
   const {
@@ -49,6 +109,7 @@ function renderModelsForm(props: ModelsRenderProps) {
     onApiKeyChange,
     onBaseUrlChange,
     onModelChange,
+    onDefaultModelChange,
     onToggleShowApiKey,
   } = props;
 
@@ -57,7 +118,7 @@ function renderModelsForm(props: ModelsRenderProps) {
       <div class="models-header">
         <h2>Model Configuration</h2>
         <p class="muted">
-          Configure Qwen model provider for Agent Runtime
+          Configure AI model provider for Agent Runtime
         </p>
       </div>
 

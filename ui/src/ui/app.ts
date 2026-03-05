@@ -348,6 +348,14 @@ export class OpenClawApp extends LitElement {
   @state() skillsBusyKey: string | null = null;
   @state() skillMessages: Record<string, SkillMessage> = {};
 
+  @state() modelsLoading = false;
+  @state() modelsSaving = false;
+  @state() modelsApiKey = "";
+  @state() modelsBaseUrl = "";
+  @state() modelsModel = "";
+  @state() modelsDefaultModel = "";
+  @state() modelsShowApiKey = false;
+
   @state() debugLoading = false;
   @state() debugStatus: StatusSummary | null = null;
   @state() debugHealth: HealthSnapshot | null = null;
