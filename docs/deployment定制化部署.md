@@ -91,7 +91,7 @@ pnpm openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallb
     },
     "auth": {
       "mode": "token",
-      "token": "你的网关令牌"
+      "token": "683a6d04df0c1d33a3d2ccbd26dc5b93"
     }
   }
 }
@@ -105,18 +105,20 @@ pnpm openclaw config set gateway.controlUi.dangerouslyAllowHostHeaderOriginFallb
 | `gateway.controlUi.allowInsecureAuth` | 允许非安全上下文认证 | `true` |
 | `gateway.controlUi.dangerouslyDisableDeviceAuth` | 禁用设备认证 | `true` |
 | `gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback` | 允许 Host header 源回退 | `true` |
-| `gateway.auth.token` | 网关认证令牌 | 自定义令牌 |
+| `gateway.auth.token` | 网关认证令牌 | `683a6d04df0c1d33a3d2ccbd26dc5b93` |
 
 ### 网关令牌
 
-网关令牌用于 Control UI 连接认证。可以在配置文件中设置：
+当前使用的网关令牌为: `683a6d04df0c1d33a3d2ccbd26dc5b93`
+
+如需更换令牌，可以在配置文件中设置：
 
 ```bash
 # 生成随机令牌
 openssl rand -hex 16
 
 # 或在启动脚本中通过环境变量设置
-export OPENCLAW_GATEWAY_TOKEN="你的令牌"
+export OPENCLAW_GATEWAY_TOKEN="你的新令牌"
 ```
 
 ## 服务端口
@@ -142,7 +144,7 @@ export OPENCLAW_GATEWAY_TOKEN="你的令牌"
 | 字段 | 值 |
 |------|-----|
 | **WebSocket URL** | `ws://117.50.174.50:18789/apps/openclaw` |
-| **网关令牌** | 配置的令牌 |
+| **网关令牌** | `683a6d04df0c1d33a3d2ccbd26dc5b93` |
 | **默认会话密钥** | `main` |
 
 ## 启停脚本说明
@@ -200,7 +202,7 @@ tail -f /tmp/openclaw/openclaw-ui-2026-03-05.log
 ### 1. 启动 Gateway
 
 ```bash
-export OPENCLAW_GATEWAY_TOKEN="你的令牌"
+export OPENCLAW_GATEWAY_TOKEN="683a6d04df0c1d33a3d2ccbd26dc5b93"
 pnpm openclaw gateway --port 18789 --bind lan --allow-unconfigured --force --verbose
 ```
 
