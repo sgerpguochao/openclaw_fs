@@ -16,6 +16,8 @@ GATEWAY_TOKEN="683a6d04df0c1d33a3d2ccbd26dc5b93"
 # 设置环境变量 (供 Gateway 使用)
 export OPENCLAW_GATEWAY_TOKEN="$GATEWAY_TOKEN"
 export DASHSCOPE_API_KEY="sk-sp-c9fc8058dd184f5eb6cf560b04a900b2"
+# 使用项目内 Gateway 配置，解决 non-loopback 下 Control UI 需 allowedOrigins 的启动失败
+export OPENCLAW_CONFIG_PATH="$SCRIPT_DIR/openclaw.gateway-dev.json"
 
 # 获取本机 IP
 HOST_IP=$(hostname -I | awk '{print $1}')
