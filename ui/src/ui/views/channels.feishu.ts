@@ -42,12 +42,7 @@ export function renderFeishuCard(params: {
   // 构建账号列表 - 只显示有 appId 的账号
   const accountList: AccountEntry[] = [];
 
-  // 从 top-level 获取旧版配置
-  const legacyAppId = feishuConfig?.appId as string | undefined;
-  const legacyAppSecret = feishuConfig?.appSecret as string | undefined;
-  const legacyEnabled = feishuConfig?.enabled as boolean | undefined;
-
-  // 优先从 accounts 配置中获取
+  // 从 accounts 配置中获取
   const accounts = feishuConfig?.accounts as Record<string, unknown> | undefined;
   if (accounts && typeof accounts === "object") {
     for (const [id, account] of Object.entries(accounts)) {
@@ -68,32 +63,9 @@ export function renderFeishuCard(params: {
     }
   }
 
-  // 如果没有 accounts 但有旧版配置，显示默认账号
-  if (accountList.length === 0 && legacyAppId) {
-    accountList.push({
-      id: "default",
-      name: "默认机器人",
-      appId: legacyAppId,
-      appSecret: legacyAppSecret || "",
-      enabled: legacyEnabled !== false,
-    });
-  }
-
   // 处理配置变更
   const handleFieldChange = (path: string[], value: unknown) => {
     props.onConfigPatch(["channels", "feishu", ...path], value);
-  };
-
-  // 添加新账号 - 使用固定ID前缀
-  const handleAddAccount = () => {
-    const newId = `feishu_bot_${Date.now()}`;
-    // 创建一个空账号，等待用户填写
-    handleFieldChange(["accounts", newId], {
-      enabled: true,
-      name: "新机器人",
-      appId: "",
-      appSecret: ""
-    });
   };
 
   // 更新账号信息
@@ -103,21 +75,12 @@ export function renderFeishuCard(params: {
 
   // 删除账号
   const handleDeleteAccount = (accountId: string) => {
-    if (accountId === "default") {
-      // 删除默认账号时，只保留旧的 appId/appSecret
-      handleFieldChange(["accounts"], undefined);
-    } else {
-      handleFieldChange(["accounts", accountId], undefined);
-    }
+    handleFieldChange(["accounts", accountId], undefined);
   };
 
   // 切换账号启用状态
   const handleToggleAccount = (accountId: string, enabled: boolean) => {
-    if (accountId === "default") {
-      handleFieldChange(["enabled"], enabled);
-    } else {
-      handleFieldChange(["accounts", accountId, "enabled"], enabled);
-    }
+    handleFieldChange(["accounts", accountId, "enabled"], enabled);
   };
 
   // 渲染账号编辑表单
@@ -130,8 +93,8 @@ export function renderFeishuCard(params: {
       <div style="margin-bottom: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="font-weight: bold; color: var(--text);">
-            机器人 ${index + 1}
-            ${account.id !== "default" ? html`<span style="font-weight: normal; color: var(--text-secondary);">(${account.id})</span>` : nothing}
+            ${account.name}
+            <span style="font-weight: normal; color: var(--text-secondary);">(${account.id})</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; background: ${isRunning ? "var(--accent)" : "var(--text-secondary)"}; color: white;">
@@ -204,25 +167,16 @@ export function renderFeishuCard(params: {
   return html`
     <div class="card">
       <div class="card-title">飞书机器人</div>
-      <div class="card-sub">配置和管理飞书机器人账号</div>
+      <div class="card-sub">配置和管理飞书机器人账号（添加账号请修改配置文件）</div>
 
       <!-- 账号列表 -->
       <div style="margin-top: 16px;">
-        <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="font-weight: bold; color: var(--text);">已配置的机器人 (${accountList.length})</div>
-          <button
-            class="btn primary"
-            style="padding: 6px 12px; font-size: 14px;"
-            @click=${handleAddAccount}
-          >
-            + 添加机器人
-          </button>
-        </div>
+        <div style="font-weight: bold; color: var(--text); margin-bottom: 12px;">已配置的机器人 (${accountList.length})</div>
 
         ${accountList.length === 0
           ? html`<div style="padding: 40px; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 8px;">
               <div style="margin-bottom: 8px;">暂无配置的机器人</div>
-              <div style="font-size: 12px;">点击"添加机器人"按钮添加第一个飞书机器人</div>
+              <div style="font-size: 12px;">请在配置文件中添加机器人账号</div>
             </div>`
           : accountList.map((account, index) => renderAccountForm(account, index))
         }
