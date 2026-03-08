@@ -1,14 +1,18 @@
 {
+  "meta": {
+    "lastTouchedVersion": "2026.3.3",
+    "lastTouchedAt": "2026-03-08T15:43:50.649Z"
+  },
   "models": {
     "providers": {
       "qwenCustom": {
-        "baseUrl": "https://api.deepseek.com",
-        "apiKey": "sk-9071acf82b1d454c9b812dd7ea13222c",
+        "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+        "apiKey": "sk-sp-c9fc8058dd184f5eb6cf560b04a900b2",
         "api": "openai-completions",
         "models": [
           {
-            "id": "deepseek-chat",
-            "name": "deepseek-chat",
+            "id": "qwen3.5-plus",
+            "name": "qwen3.5-plus",
             "api": "openai-completions",
             "reasoning": false,
             "input": [
@@ -30,7 +34,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": ""
+        "primary": "qwenCustom/qwen3.5-plus"
       }
     }
   },
@@ -39,6 +43,29 @@
     "nativeSkills": "auto",
     "restart": true,
     "ownerDisplay": "raw"
+  },
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "connectionMode": "websocket",
+      "domain": "feishu",
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "accounts": {
+        "openclaw-test": {
+          "enabled": true,
+          "name": "openclaw-test",
+          "appId": "cli_a9278bbc1c219cb3",
+          "appSecret": "UlI8hPV92XzabN1x6OnaJhUt1ExWygFn"
+        },
+        "openclaw-jiaowu": {
+          "enabled": true,
+          "name": "openclaw-教务",
+          "appId": "cli_a9272ce932f8dcc1",
+          "appSecret": "cNGeL0utldkxuU0nI6Q5ydwdQQyNgTID"
+        }
+      }
+    }
   },
   "gateway": {
     "controlUi": {
@@ -59,8 +86,11 @@
       "token": "683a6d04df0c1d33a3d2ccbd26dc5b93"
     }
   },
-  "meta": {
-    "lastTouchedVersion": "2026.3.3",
-    "lastTouchedAt": "2026-03-06T16:51:12.635Z"
+  "plugins": {
+    "entries": {
+      "feishu": {
+        "enabled": true
+      }
+    }
   }
 }
