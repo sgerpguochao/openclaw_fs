@@ -2,17 +2,9 @@ import type {
   ChannelAccountSnapshot,
   ChannelsStatusSnapshot,
   ConfigUiHints,
-  DiscordStatus,
-  GoogleChatStatus,
-  IMessageStatus,
-  NostrProfile,
-  NostrStatus,
-  SignalStatus,
-  SlackStatus,
-  TelegramStatus,
-  WhatsAppStatus,
 } from "../types.ts";
 import type { NostrProfileFormState } from "./channels.nostr-profile-form.ts";
+import type { FeishuStatus } from "./channels.feishu.ts";
 
 export type ChannelKey = string;
 
@@ -50,13 +42,6 @@ export type ChannelsProps = {
 };
 
 export type ChannelsChannelData = {
-  whatsapp?: WhatsAppStatus;
-  telegram?: TelegramStatus;
-  discord?: DiscordStatus | null;
-  googlechat?: GoogleChatStatus | null;
-  slack?: SlackStatus | null;
-  signal?: SignalStatus | null;
-  imessage?: IMessageStatus | null;
-  nostr?: NostrStatus | null;
+  feishu?: FeishuStatus;
   channelAccounts?: Record<string, ChannelAccountSnapshot[]> | null;
 };
