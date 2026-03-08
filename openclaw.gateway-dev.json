@@ -1,18 +1,14 @@
 {
-  "meta": {
-    "lastTouchedVersion": "2026.3.3",
-    "lastTouchedAt": "2026-03-08T15:43:50.649Z"
-  },
   "models": {
     "providers": {
       "qwenCustom": {
-        "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
-        "apiKey": "sk-sp-c9fc8058dd184f5eb6cf560b04a900b2",
+        "baseUrl": "https://api.minimaxi.com/v1",
+        "apiKey": "sk-cp-RKMOnCYS37G4jkoh9p6-MPEDHklQPidQCMhIFeoFZcAgF4uC5OHaiCnKt7w9-l82Bt4LE25BaR2zSvTp2Lt1lBpMkhKQus_OClAx6xfsJn6adz0mwbE6yJk",
         "api": "openai-completions",
         "models": [
           {
-            "id": "qwen3.5-plus",
-            "name": "qwen3.5-plus",
+            "id": "MiniMax-M2.5",
+            "name": "MiniMax-M2.5",
             "api": "openai-completions",
             "reasoning": false,
             "input": [
@@ -34,7 +30,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "qwenCustom/qwen3.5-plus"
+        "primary": "qwenCustom/MiniMax-M2.5"
       }
     }
   },
@@ -43,29 +39,6 @@
     "nativeSkills": "auto",
     "restart": true,
     "ownerDisplay": "raw"
-  },
-  "channels": {
-    "feishu": {
-      "enabled": true,
-      "connectionMode": "websocket",
-      "domain": "feishu",
-      "dmPolicy": "open",
-      "groupPolicy": "open",
-      "accounts": {
-        "openclaw-test": {
-          "enabled": true,
-          "name": "openclaw-test",
-          "appId": "cli_a9278bbc1c219cb3",
-          "appSecret": "UlI8hPV92XzabN1x6OnaJhUt1ExWygFn"
-        },
-        "openclaw-jiaowu": {
-          "enabled": true,
-          "name": "openclaw-教务",
-          "appId": "cli_a9272ce932f8dcc1",
-          "appSecret": "cNGeL0utldkxuU0nI6Q5ydwdQQyNgTID"
-        }
-      }
-    }
   },
   "gateway": {
     "controlUi": {
@@ -86,11 +59,8 @@
       "token": "683a6d04df0c1d33a3d2ccbd26dc5b93"
     }
   },
-  "plugins": {
-    "entries": {
-      "feishu": {
-        "enabled": true
-      }
-    }
+  "meta": {
+    "lastTouchedVersion": "2026.3.3",
+    "lastTouchedAt": "2026-03-08T16:03:01.745Z"
   }
 }
