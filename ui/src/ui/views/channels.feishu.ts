@@ -32,33 +32,6 @@ export interface FeishuAccount extends ChannelAccountSnapshot {
   };
 }
 
-// 获取配置值
-function getConfigValue(config: Record<string, unknown>, path: string[]): unknown {
-  let current = config;
-  for (const key of path) {
-    if (current && typeof current === "object" && key in current) {
-      current = (current as Record<string, unknown>)[key];
-    } else {
-      return undefined;
-    }
-  }
-  return current;
-}
-
-// 更新配置值
-function setConfigValue(config: Record<string, unknown>, path: string[], value: unknown): void {
-  if (path.length === 0) return;
-  let current = config;
-  for (let i = 0; i < path.length - 1; i++) {
-    const key = path[i];
-    if (!(key in current) || typeof current[key] !== "object") {
-      current[key] = {};
-    }
-    current = (current as Record<string, unknown>)[key];
-  }
-  current[path[path.length - 1]] = value;
-}
-
 export function renderFeishuCard(params: {
   props: ChannelsProps;
   feishu?: FeishuStatus;
@@ -66,7 +39,6 @@ export function renderFeishuCard(params: {
   accountCountLabel: unknown;
 }) {
   const { props, feishu, feishuAccounts, accountCountLabel } = params;
-  const hasAccounts = feishuAccounts.length > 0;
 
   // 获取当前配置
   const configForm = props.configForm as Record<string, unknown> | null;
@@ -148,17 +120,17 @@ export function renderFeishuCard(params: {
     const probe = status?.probe;
 
     return html`
-      <div class="account-card" style="margin-bottom: 12px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <div class="account-card" style="margin-bottom: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary);">
         <div class="row" style="justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-weight: bold;">${account.name}</div>
-            <div style="font-size: 12px; color: #666;">App ID: ${account.appId || "未配置"}</div>
+            <div style="font-weight: bold; color: var(--text);">${account.name}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">App ID: ${account.appId || "未配置"}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; background: ${isRunning ? "#4caf50" : "#f44336"}; color: white;">
+            <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; background: ${isRunning ? "var(--accent)" : "var(--text-secondary)"}; color: white;">
               ${isRunning ? "运行中" : "已停止"}
             </span>
-            <label style="display: flex; align-items: center; cursor: pointer;">
+            <label style="display: flex; align-items: center; cursor: pointer; color: var(--text);">
               <input
                 type="checkbox"
                 .checked=${account.enabled !== false}
@@ -169,7 +141,7 @@ export function renderFeishuCard(params: {
             </label>
             <button
               class="btn"
-              style="padding: 4px 8px; font-size: 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              style="padding: 4px 8px; font-size: 12px; background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer;"
               @click=${() => handleDeleteAccount(account.id)}
             >
               删除
@@ -178,7 +150,7 @@ export function renderFeishuCard(params: {
         </div>
         ${
           probe
-            ? html`<div style="margin-top: 8px; font-size: 12px; color: ${probe.ok ? "#4caf50" : "#f44336"};">
+            ? html`<div style="margin-top: 8px; font-size: 12px; color: ${probe.ok ? "var(--accent)" : "var(--danger)"};">
                 探测结果: ${probe.ok ? "成功" : "失败"} ${probe.error || ""}
               </div>`
             : nothing
@@ -195,7 +167,7 @@ export function renderFeishuCard(params: {
       <!-- 账号列表 -->
       <div style="margin-top: 16px;">
         <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="font-weight: bold;">已配置的账号 (${accountList.length})</div>
+          <div style="font-weight: bold; color: var(--text);">已配置的账号 (${accountList.length})</div>
           <button
             class="btn primary"
             style="padding: 6px 12px; font-size: 14px;"
@@ -206,7 +178,7 @@ export function renderFeishuCard(params: {
         </div>
 
         ${accountList.length === 0
-          ? html`<div style="padding: 20px; text-align: center; color: #666; background: #f5f5f5; border-radius: 8px;">
+          ? html`<div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 8px;">
               暂无配置的账号，请点击"添加账号"添加第一个机器人
             </div>`
           : accountList.map(account => renderAccountRow(account))
@@ -214,16 +186,16 @@ export function renderFeishuCard(params: {
       </div>
 
       <!-- 简化配置表单 -->
-      <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px;">
-        <div style="font-weight: bold; margin-bottom: 12px;">全局配置</div>
+      <div style="margin-top: 24px; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
+        <div style="font-weight: bold; margin-bottom: 12px; color: var(--text);">全局配置</div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label style="display: block; font-size: 12px; margin-bottom: 4px;">飞书域名</label>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">飞书域名</label>
             <select
               .value=${domain || "feishu"}
               @change=${(e: Event) => handleFieldChange(["domain"], (e.target as HTMLSelectElement).value)}
-              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+              style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);"
             >
               <option value="feishu">飞书 (feishu)</option>
               <option value="lark">飞书国际版 (lark)</option>
@@ -231,11 +203,11 @@ export function renderFeishuCard(params: {
           </div>
 
           <div>
-            <label style="display: block; font-size: 12px; margin-bottom: 4px;">连接模式</label>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">连接模式</label>
             <select
               .value=${connectionMode || "websocket"}
               @change=${(e: Event) => handleFieldChange(["connectionMode"], (e.target as HTMLSelectElement).value)}
-              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+              style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);"
             >
               <option value="websocket">WebSocket (推荐)</option>
               <option value="webhook">Webhook</option>
@@ -243,11 +215,11 @@ export function renderFeishuCard(params: {
           </div>
 
           <div>
-            <label style="display: block; font-size: 12px; margin-bottom: 4px;">私聊策略</label>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">私聊策略</label>
             <select
               .value=${(feishuConfig?.dmPolicy as string) || "open"}
               @change=${(e: Event) => handleFieldChange(["dmPolicy"], (e.target as HTMLSelectElement).value)}
-              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+              style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);"
             >
               <option value="open">完全开放</option>
               <option value="pairing">需要配对</option>
@@ -256,11 +228,11 @@ export function renderFeishuCard(params: {
           </div>
 
           <div>
-            <label style="display: block; font-size: 12px; margin-bottom: 4px;">群聊策略</label>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">群聊策略</label>
             <select
               .value=${(feishuConfig?.groupPolicy as string) || "open"}
               @change=${(e: Event) => handleFieldChange(["groupPolicy"], (e.target as HTMLSelectElement).value)}
-              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+              style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);"
             >
               <option value="open">完全开放</option>
               <option value="allowlist">白名单</option>
