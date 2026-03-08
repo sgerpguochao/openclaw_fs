@@ -19,17 +19,6 @@ export interface FeishuStatus {
   lastProbeAt?: number | null;
 }
 
-export interface FeishuAccount extends ChannelsProps {
-  probe?: {
-    ok: boolean;
-    status?: string;
-    error?: string;
-    appId?: string;
-    botName?: string;
-    botOpenId?: string;
-  };
-}
-
 interface AccountEntry {
   id: string;
   name: string;
@@ -50,21 +39,27 @@ export function renderFeishuCard(params: {
   const configForm = props.configForm as Record<string, unknown> | null;
   const feishuConfig = (configForm?.channels as Record<string, unknown> | undefined)?.feishu as Record<string, unknown> | undefined;
 
-  // 构建账号列表
+  // 构建账号列表 - 只显示有 appId 的账号
   const accountList: AccountEntry[] = [];
 
-  // 从 accounts 配置中获取
+  // 从 top-level 获取旧版配置
+  const legacyAppId = feishuConfig?.appId as string | undefined;
+  const legacyAppSecret = feishuConfig?.appSecret as string | undefined;
+  const legacyEnabled = feishuConfig?.enabled as boolean | undefined;
+
+  // 优先从 accounts 配置中获取
   const accounts = feishuConfig?.accounts as Record<string, unknown> | undefined;
   if (accounts && typeof accounts === "object") {
     for (const [id, account] of Object.entries(accounts)) {
       if (account && typeof account === "object") {
         const acc = account as Record<string, unknown>;
         // 只显示有 appId 的账号
-        if (acc.appId) {
+        const accAppId = acc.appId as string | undefined;
+        if (accAppId && accAppId.trim()) {
           accountList.push({
             id,
             name: (acc.name as string) || id,
-            appId: acc.appId as string,
+            appId: accAppId,
             appSecret: (acc.appSecret as string) || "",
             enabled: acc.enabled !== false,
           });
@@ -73,16 +68,14 @@ export function renderFeishuCard(params: {
     }
   }
 
-  // 如果没有 accounts 但有 appId（旧版配置），显示默认账号
-  const legacyAppId = feishuConfig?.appId as string | undefined;
-  const legacyAppSecret = feishuConfig?.appSecret as string | undefined;
+  // 如果没有 accounts 但有旧版配置，显示默认账号
   if (accountList.length === 0 && legacyAppId) {
     accountList.push({
       id: "default",
       name: "默认机器人",
       appId: legacyAppId,
       appSecret: legacyAppSecret || "",
-      enabled: feishuConfig?.enabled !== false,
+      enabled: legacyEnabled !== false,
     });
   }
 
@@ -91,13 +84,16 @@ export function renderFeishuCard(params: {
     props.onConfigPatch(["channels", "feishu", ...path], value);
   };
 
-  // 添加新账号
+  // 添加新账号 - 使用固定ID前缀
   const handleAddAccount = () => {
-    const newId = `bot_${Date.now()}`;
-    handleFieldChange(["accounts", newId, "enabled"], true);
-    handleFieldChange(["accounts", newId, "name"], "新机器人");
-    handleFieldChange(["accounts", newId, "appId"], "");
-    handleFieldChange(["accounts", newId, "appSecret"], "");
+    const newId = `feishu_bot_${Date.now()}`;
+    // 创建一个空账号，等待用户填写
+    handleFieldChange(["accounts", newId], {
+      enabled: true,
+      name: "新机器人",
+      appId: "",
+      appSecret: ""
+    });
   };
 
   // 更新账号信息
@@ -108,7 +104,8 @@ export function renderFeishuCard(params: {
   // 删除账号
   const handleDeleteAccount = (accountId: string) => {
     if (accountId === "default") {
-      handleFieldChange([], undefined);
+      // 删除默认账号时，只保留旧的 appId/appSecret
+      handleFieldChange(["accounts"], undefined);
     } else {
       handleFieldChange(["accounts", accountId], undefined);
     }
@@ -165,7 +162,7 @@ export function renderFeishuCard(params: {
             <input
               type="text"
               .value=${account.name}
-              @input=${(e: Event) => handleUpdateAccount(account.id, "name", (e.target as HTMLInputElement).value)}
+              @change=${(e: Event) => handleUpdateAccount(account.id, "name", (e.target as HTMLInputElement).value)}
               style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); box-sizing: border-box;"
               placeholder="输入机器人名称"
             />
@@ -176,7 +173,7 @@ export function renderFeishuCard(params: {
             <input
               type="text"
               .value=${account.appId || ""}
-              @input=${(e: Event) => handleUpdateAccount(account.id, "appId", (e.target as HTMLInputElement).value)}
+              @change=${(e: Event) => handleUpdateAccount(account.id, "appId", (e.target as HTMLInputElement).value)}
               style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); box-sizing: border-box;"
               placeholder="输入 App ID"
             />
@@ -186,7 +183,7 @@ export function renderFeishuCard(params: {
             <input
               type="password"
               .value=${account.appSecret || ""}
-              @input=${(e: Event) => handleUpdateAccount(account.id, "appSecret", (e.target as HTMLInputElement).value)}
+              @change=${(e: Event) => handleUpdateAccount(account.id, "appSecret", (e.target as HTMLInputElement).value)}
               style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); box-sizing: border-box;"
               placeholder="输入 App Secret"
             />
