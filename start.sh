@@ -18,6 +18,8 @@ GUARD_PID_FILE="/tmp/openclaw/guard.pid"
 
 export OPENCLAW_GATEWAY_TOKEN="$GATEWAY_TOKEN"
 export DASHSCOPE_API_KEY="sk-sp-c9fc8058dd184f5eb6cf560b04a900b2"
+export FIRECRAWL_API_KEY="fc-64f6dddeef4e4e56a482b1e9d5435949"
+export TAVILY_API_KEY="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"
 export OPENCLAW_CONFIG_PATH="$CONFIG_FILE"
 
 HOST_IP=$(hostname -I | awk '{print $1}')
