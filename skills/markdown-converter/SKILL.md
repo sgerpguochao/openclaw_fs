@@ -1,193 +1,67 @@
 ---
 name: markdown-converter
-description: "Convert documents and files to Markdown using markitdown. Use when: user wants to convert PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx, .xls), HTML, CSV, JSON, XML, images (with EXIF/OCR), audio (with transcription), ZIP archives, YouTube URLs, or EPubs to Markdown format for LLM processing or text analysis. NOT for: simple text files that are already in Markdown format."
-emoji: 📄
-requires:
-  bins:
-    - uv
-    - python3
+description: Convert documents and files to Markdown using markitdown. Use when converting PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx, .xls), HTML, CSV, JSON, XML, images (with EXIF/OCR), audio (with transcription), ZIP archives, YouTube URLs, or EPubs to Markdown format for LLM processing or text analysis.
 ---
 
-# Markdown Converter Skill
+# Markdown Converter
 
-Convert various document formats to Markdown using the `markitdown` tool.
+Convert files to Markdown using `uvx markitdown` — no installation required.
 
-## When to Use
-
-✅ **USE this skill when:**
-
-- User wants to convert PDF to Markdown
-- User wants to convert Word (.docx) to Markdown
-- User wants to convert PowerPoint (.pptx) to Markdown
-- User wants to convert Excel (.xlsx, .xls) to Markdown
-- User wants to convert HTML to Markdown
-- User wants to convert CSV, JSON, XML to Markdown
-- User wants to extract text from images using OCR
-- User wants to transcribe audio to text
-- User wants to convert YouTube URLs to Markdown
-- User wants to convert EPub to Markdown
-- User wants to extract content from ZIP archives
-
-❌ **DON'T use this skill when:**
-
-- File is already in Markdown format
-- User wants to convert Markdown to other formats (use different tools)
-- Simple text extraction from plain text files
-
-## Installation
-
-No installation required - uses `uvx` to run markitdown directly.
-
-First run will cache dependencies; subsequent runs are faster.
-
-## Commands
-
-### Basic Usage
+## Basic Usage
 
 ```bash
-# Convert a PDF to Markdown
+# Convert to stdout
+uvx markitdown input.pdf
+
+# Save to file
 uvx markitdown input.pdf -o output.md
+uvx markitdown input.docx > output.md
 
-# Convert a Word document to Markdown
-uvx markitdown document.docx -o document.md
-
-# Convert to Markdown and print to stdout
-uvx markitdown document.pdf
+# From stdin
+cat input.pdf | uvx markitdown
 ```
 
-### Convert Various Formats
+## Supported Formats
+
+- **Documents**: PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx, .xls)
+- **Web/Data**: HTML, CSV, JSON, XML
+- **Media**: Images (EXIF + OCR), Audio (EXIF + transcription)
+- **Other**: ZIP (iterates contents), YouTube URLs, EPub
+
+## Options
 
 ```bash
-# Word documents
-uvx markitdown document.docx
-
-# PowerPoint presentations
-uvx markitdown presentation.pptx
-
-# Excel spreadsheets
-uvx markitdown data.xlsx
-uvx markitdown data.xls
-
-# HTML files
-uvx markitdown page.html
-
-# CSV files
-uvx markitdown data.csv
-
-# JSON files
-uvx markitdown data.json
-
-# XML files
-uvx markitdown data.xml
+-o OUTPUT      # Output file
+-x EXTENSION   # Hint file extension (for stdin)
+-m MIME_TYPE   # Hint MIME type
+-c CHARSET     # Hint charset (e.g., UTF-8)
+-d             # Use Azure Document Intelligence
+-e ENDPOINT    # Document Intelligence endpoint
+--use-plugins  # Enable 3rd-party plugins
+--list-plugins # Show installed plugins
 ```
 
-### Media Conversion
+## Examples
 
 ```bash
-# Images (with EXIF and OCR)
-uvx markitdown image.jpg
-uvx markitdown image.png
+# Convert Word document
+uvx markitdown report.docx -o report.md
 
-# Audio files (with transcription)
-uvx markitdown audio.mp3
-uvx markitdown audio.wav
+# Convert Excel spreadsheet
+uvx markitdown data.xlsx > data.md
 
-# YouTube URLs
-uvx markitdown "https://youtube.com/watch?v=example"
+# Convert PowerPoint presentation
+uvx markitdown slides.pptx -o slides.md
 
-# EPub e-books
-uvx markitdown book.epub
+# Convert with file type hint (for stdin)
+cat document | uvx markitdown -x .pdf > output.md
+
+# Use Azure Document Intelligence for better PDF extraction
+uvx markitdown scan.pdf -d -e "https://your-resource.cognitiveservices.azure.com/"
 ```
 
-### Archives
+## Notes
 
-```bash
-# ZIP archives (extracts all readable content)
-uvx markitdown archive.zip
-```
-
-### Advanced Options
-
-```bash
-# Use Azure Document Intelligence for complex PDFs
-uvx markitdown complex.pdf -d
-
-# Provide file type hint for stdin input
-cat document.docx | uvx markitdown --file-type docx
-
-# Preserve links
-uvx markitdown document.html --preserve-links
-```
-
-## Supported Formats Summary
-
-| Category | Formats |
-|----------|---------|
-| Documents | PDF, .docx, .pptx, .xlsx, .xls |
-| Web/Data | HTML, CSV, JSON, XML |
-| Media | Images (.jpg, .png, .gif), Audio (.mp3, .wav) |
-| Other | ZIP, YouTube URLs, EPub |
-
-## Output Features
-
-The converter preserves:
-
-- Headings and document structure
-- Tables (including merged cells)
-- Lists (ordered and unordered)
-- Links and images
-- Code blocks
-- Bold, italic, and other formatting
-
-## Use Cases
-
-### LLM Processing
-
-Convert documents to Markdown for easier processing by LLMs:
-
-```bash
-uvx markitdown report.pdf -o report.md
-```
-
-Then feed the Markdown content to your AI agent.
-
-### Text Analysis
-
-Extract text from various formats for analysis:
-
-```bash
-uvx markitdown data.xlsx -o data.md
-```
-
-### Batch Processing
-
-Process multiple files:
-
-```bash
-for file in *.pdf; do
-  uvx markitdown "$file" -o "${file%.pdf}.md"
-done
-```
-
-### Image OCR
-
-Extract text from images:
-
-```bash
-uvx markitdown screenshot.png -o text.md
-```
-
-### Audio Transcription
-
-Transcribe audio to text:
-
-```bash
-uvx markitdown interview.mp3 -o transcript.md
-```
-
-## Tips
-
-- First run is slower due to dependency caching
-- Use `-o` flag to specify output file
-- For stdin input, use `--file-type` to specify format
-- Complex PDFs may benefit from Azure Document Intelligence mode (`-d`)
+- Output preserves document structure: headings, tables, lists, links
+- First run caches dependencies; subsequent runs are faster
+- For complex PDFs with poor extraction, use `-d` with Azure Document Intelligence
