@@ -116,7 +116,7 @@ function renderModelsForm(props: ModelsRenderProps) {
   return html`
     <div class="models-page">
       <div class="models-header">
-        <h2>Model Configuration</h2>
+        <h2 style="margin: 0 0 8px 0; font-size: 1.5rem; font-weight: 600;">Model Configuration</h2>
         <p class="muted">
           Configure AI model provider for Agent Runtime
         </p>

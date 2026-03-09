@@ -154,7 +154,7 @@ export function iconForTab(tab: Tab): IconName {
     case "logs":
       return "scrollText";
     case "models":
-      return "cpu";
+      return "brain";
     default:
       return "folder";
   }

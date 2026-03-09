@@ -1,4 +1,4 @@
-﻿# Phase 3：Plugins / Channels 统一输入输出规范（v1.0，源码版）
+# Phase 3：Plugins / Channels 统一输入输出规范（v1.0，源码版）
 
 ## 0. 文档目标
 
@@ -17,10 +17,10 @@
 ## 1. 结论先行（最新状态）
 
 1. **Channel 已完全纳入 Plugin Registry 统一治理**，由 `src/plugins/loader.ts` + `src/plugins/registry.ts` 负责发现、验配、注册、诊断。  
-2. **Inbound 仍是“事实标准契约”**（`MsgContext` + `finalizeInboundContext` + dispatch），但字段语义与安全默认值明显增强（尤其 `CommandAuthorized` 默认拒绝）。  
-3. **Outbound 已是稳定强契约**（`ChannelOutboundAdapter`），并由 `resolveOutboundTarget` + `deliverOutboundPayloads` 统一承载发信、分块、hook、队列与镜像写回。  
-4. **Channel 运行时管理升级**：`server-channels` + `channel-health-monitor` 提供按账号启动/停止、自动重启回退、手工停止保护、健康巡检。  
-5. 相比旧版，当前规范从“接口定义”升级为“**注册治理 + 生命周期治理 + 安全默认策略**”的完整体系。
+2. **Inbound 仍是"事实标准契约"**（`MsgContext` + `finalizeInboundContext` + dispatch），但字段语义与安全默认值明显增强（尤其 `CommandAuthorized` 默认拒绝）。  
+3. **Outbound 已是稳定强契约**（`ChannelOutboundAdapter`），并由 `resolveOutboundTarget` + `deliverOutboundPayloads` 统一承载发信，分块、hook、队列与镜像写回。  
+4. **Channel 运行时管理升级**：`server-channels` + `channel-health-monitor` 提供按账号启动/停止、自动重启回退，手工停止保护，健康巡检。  
+5. 相比旧版，当前规范从"接口定义"升级为"**注册治理 + 生命周期治理 + 安全默认策略**"的完整体系。
 
 ---
 
@@ -81,7 +81,7 @@
 - `src/channels/plugins/types.core.ts`
 - `src/channels/plugins/onboarding-types.ts`
 
-`ChannelPlugin` 已从旧版的“基础 adapter 集合”扩展为完整能力面：
+`ChannelPlugin` 已从旧版的"基础 adapter 集合"扩展为完整能力面：
 
 - 基础：`id/meta/capabilities/config`
 - 生命周期：`gateway/start/stop/login/logout`
@@ -102,7 +102,7 @@
 
 职责：
 
-- 管理 channel account 生命周期（运行态快照、启动/停止、重启）。
+- 管理 channel account 生命周期（运行态快照、启动/停止，重启）。
 - 暴露统一 RPC：`channels.status`、`channels.logout`、`send`、`poll`。
 - 将平台差异下沉到 `ChannelPlugin` adapters，不污染 Gateway 主干。
 
@@ -131,7 +131,7 @@
 职责：
 
 - 承载统一消息上下文模型 `MsgContext`。
-- 归一化文本、媒体、会话字段并补齐默认值。
+- 归一化文本、媒体，会话字段并补齐默认值。
 - 将各 Channel 输入统一汇入 reply/agent 流程。
 
 ---
@@ -280,7 +280,7 @@
 2. `resolveTarget` 与 `normalizeTarget` 规则必须稳定，避免 DM/群组串路由。  
 3. 群聊必须尽量提供 sender identity 字段，避免命令授权/审计不准。  
 4. 不要绕开 `deliverOutboundPayloads` 私发消息，否则会丢失 queue/hook/mirror 能力。  
-5. 没有显式 `to` 时，务必设计 `resolveDefaultTo` 或可靠 hint，避免“无目标”错误。
+5. 没有显式 `to` 时，务必设计 `resolveDefaultTo` 或可靠 hint，避免"无目标"错误。
 
 ---
 
@@ -308,5 +308,247 @@
 
 ## 10. 一句话总结
 
-当前 OpenClaw 的 Phase 3 已从“Channel 接口定义”演进为“**Plugin 统一治理 + Channel 运行时治理 + 标准化 I/O 管道**”三位一体架构：  
+当前 OpenClaw 的 Phase 3 已从"Channel 接口定义"演进为"**Plugin 统一治理 + Channel 运行时治理 + 标准化 I/O 管道**"三位一体架构：  
 **新 Channel 开发不再只是实现发送/接收函数，而是对齐一整套可复用、可观测、可治理的系统契约。**
+
+---
+
+## 11. 飞书（Feishu）Channel 接入实战（二次开发示例）
+
+本文档记录飞书 Channel 在 OpenClaw 项目中的完整接入过程，包括后端插件开发和前端 UI 开发。
+
+### 11.1 后端飞书插件结构
+
+飞书插件位于 `extensions/feishu/` 目录，核心文件：
+
+| 文件 | 说明 |
+|------|------|
+| `extensions/feishu/src/channel.ts` | 飞书 Channel Plugin 主入口，定义 `feishuPlugin` 对象 |
+| `extensions/feishu/src/accounts.ts` | 账号管理，支持多账号配置 |
+| `extensions/feishu/src/outbound.ts` | 消息发送适配器 |
+| `extensions/feishu/src/send.ts` | 消息发送实现 |
+| `extensions/feishu/src/types.ts` | 类型定义 |
+| `extensions/feishu/src/config-schema.ts` | 配置 schema 定义 |
+
+### 11.2 飞书 Plugin 配置结构
+
+飞书 Channel 支持多账号配置，配置结构如下：
+
+```typescript
+// channels.feishu 配置结构
+interface FeishuConfig {
+  enabled: boolean;
+  connectionMode: "websocket" | "webhook";
+  domain: "feishu" | "lark";
+  dmPolicy: "open" | "allowlist" | "denylist";
+  groupPolicy: "open" | "allowlist" | "denylist";
+  // 多账号支持
+  accounts?: Record<string, {
+    enabled: boolean;
+    name: string;
+    appId: string;
+    appSecret: string;
+  }>;
+}
+```
+
+### 11.3 飞书 Channel 核心代码
+
+#### 11.3.1 Plugin 注册（channel.ts）
+
+```typescript
+import type { ChannelMeta, ChannelPlugin } from "openclaw/plugin-sdk/feishu";
+
+const meta: ChannelMeta = {
+  id: "feishu",
+  label: "Feishu",
+  selectionLabel: "Feishu/Lark (飞书)",
+  docsPath: "/channels/feishu",
+  blurb: "飞书/Lark enterprise messaging.",
+  aliases: ["lark"],
+  order: 70,
+};
+
+export const feishuPlugin: ChannelPlugin<ResolvedFeishuAccount> = {
+  id: "feishu",
+  meta,
+  capabilities: {
+    chatTypes: ["direct", "channel"],
+    polls: false,
+    threads: true,
+    media: true,
+    reactions: true,
+    edit: true,
+    reply: true,
+  },
+  // ... 更多配置
+};
+```
+
+#### 11.3.2 账号配置解析（accounts.ts）
+
+```typescript
+import { resolveFeishuCredentials } from "./accounts.js";
+
+function resolveFeishuCredentials(config: FeishuConfig, accountId: string) {
+  // 支持多账号：从 accounts 对象中获取
+  if (config.accounts?.[accountId]) {
+    const account = config.accounts[accountId];
+    return {
+      appId: account.appId,
+      appSecret: account.appSecret,
+    };
+  }
+  // 兼容旧版单账号配置
+  return {
+    appId: config.appId,
+    appSecret: config.appSecret,
+  };
+}
+```
+
+### 11.4 前端 UI 开发
+
+飞书 Channel UI 位于 `ui/src/ui/views/` 目录：
+
+| 文件 | 说明 |
+|------|------|
+| `channels.feishu.ts` | 飞书 Channel 卡片渲染组件 |
+| `channels.ts` | Channel 列表主页面 |
+| `channels.types.ts` | Channel 相关类型定义 |
+
+#### 11.4.1 飞书状态类型定义
+
+```typescript
+// channels.feishu.ts
+export interface FeishuStatus {
+  configured: boolean;
+  running: boolean;
+  mode?: string | null;
+  lastStartAt?: number | null;
+  lastStopAt?: number | null;
+  lastError?: string | null;
+  probe?: {
+    ok: boolean;
+    status?: string;
+    error?: string;
+    appId?: string;
+    botName?: string;
+    botOpenId?: string;
+  } | null;
+  lastProbeAt?: number | null;
+}
+
+interface AccountEntry {
+  id: string;
+  name: string;
+  appId: string;
+  appSecret: string;
+  enabled: boolean;
+}
+```
+
+#### 11.4.2 飞书卡片渲染
+
+```typescript
+// channels.feishu.ts
+export function renderFeishuCard(params: {
+  props: ChannelsProps;
+  feishu?: FeishuStatus;
+  feishuAccounts: any[];
+  accountCountLabel: unknown;
+}) {
+  const { props, feishu, feishuAccounts } = params;
+
+  // 从配置中读取账号列表
+  const feishuConfig = (configForm?.channels as Record<string, unknown>)?.feishu;
+  const accounts = feishuConfig?.accounts as Record<string, unknown> | undefined;
+
+  // 构建账号列表 - 只显示有 appId 的账号
+  const accountList: AccountEntry[] = [];
+  if (accounts && typeof accounts === "object") {
+    for (const [id, account] of Object.entries(accounts)) {
+      const acc = account as Record<string, unknown>;
+      const accAppId = acc.appId as string | undefined;
+      if (accAppId && accAppId.trim()) {
+        accountList.push({
+          id,
+          name: (acc.name as string) || id,
+          appId: accAppId,
+          appSecret: (acc.appSecret as string) || "",
+          enabled: acc.enabled !== false,
+        });
+      }
+    }
+  }
+
+  // 渲染账号列表 UI
+  return html`
+    <div class="card">
+      <div class="card-title">飞书机器人</div>
+      ${accountList.map(account => html`
+        <div class="account-item">
+          <span>${account.name}</span>
+          <span>${account.enabled ? "已启用" : "已禁用"}</span>
+        </div>
+      `)}
+    </div>
+  `;
+}
+```
+
+### 11.5 网关配置与多账号支持
+
+飞书多账号配置需要在 `openclaw.gateway-dev.json` 中设置：
+
+```json
+{
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "connectionMode": "websocket",
+      "domain": "feishu",
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "accounts": {
+        "openclaw-test": {
+          "enabled": true,
+          "name": "openclaw-test",
+          "appId": "cli_a9278bbc1c219cb3",
+          "appSecret": "UlI8hPV92XzabN1x6OnaJhUt1ExWygFn"
+        },
+        "openclaw-jiaowu": {
+          "enabled": true,
+          "name": "openclaw-教务",
+          "appId": "cli_a9272ce932f8dcc1",
+          "appSecret": "cNGeL0utldkxuU0nI6Q5ydwdQQyNgTID"
+        }
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "feishu": {
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+### 11.6 前端导航栏图标配置
+
+在 `ui/src/ui/navigation.ts` 中为飞书 Channel 配置图标：
+
+```typescript
+// iconForTab 函数中添加
+case "channels":
+  return "link";
+```
+
+### 11.7 注意事项
+
+1. **多账号配置**：飞书 Channel 支持多账号，每个账号需要独立的 `appId` 和 `appSecret`
+2. **账号管理**：前端 UI 支持查看、编辑、启用/禁用账号，但添加账号需要通过配置文件
+3. **配置保存**：使用 `config.patch` 方法进行部分配置更新，避免覆盖其他配置
+4. **动态加载**：飞书插件通过 Plugin Registry 动态加载，支持热插拔

@@ -251,3 +251,113 @@ pnpm openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
 
 - [OpenClaw 官方文档](https://docs.openclaw.ai)
 - [GitHub 仓库](https://github.com/sgerpguochao/openclaw_fs)
+
+## 飞书机器人配置
+
+### 完整配置文件示例
+
+```json
+{
+  "models": {
+    "providers": {
+      "qwenCustom": {
+        "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+        "apiKey": "sk-sp-c9fc8058dd184f5eb6cf560b04a900b2",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3.5-plus",
+            "name": "qwen3.5-plus",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "qwenCustom/qwen3.5-plus"
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "connectionMode": "websocket",
+      "domain": "feishu",
+      "dmPolicy": "open",
+      "groupPolicy": "open",
+      "accounts": {
+        "openclaw-test": {
+          "enabled": true,
+          "name": "openclaw-test",
+          "appId": "cli_a9278bbc1c219cb3",
+          "appSecret": "UlI8hPV92XzabN1x6OnaJhUt1ExWygFn"
+        },
+        "openclaw-jiaowu": {
+          "enabled": true,
+          "name": "openclaw-教务",
+          "appId": "cli_a9272ce932f8dcc1",
+          "appSecret": "cNGeL0utldkxuU0nI6Q5ydwdQQyNgTID"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "controlUi": {
+      "allowedOrigins": [
+        "http://117.50.174.50:5173",
+        "http://117.50.174.50:18789",
+        "http://10.60.30.145:5173",
+        "http://10.60.30.145:18789",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:18789"
+      ],
+      "dangerouslyAllowHostHeaderOriginFallback": true,
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true
+    },
+    "auth": {
+      "mode": "token",
+      "token": "683a6d04df0c1d33a3d2ccbd26dc5b93"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "feishu": {
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+### 飞书账号说明
+
+| 账号名称 | App ID | App Secret |
+|---------|--------|------------|
+| openclaw-test | cli_a9278bbc1c219cb3 | UlI8hPV92XzabN1x6OnaJhUt1ExWygFn |
+| openclaw-jiaowu (教务) | cli_a9272ce932f8dcc1 | cNGeL0utldkxuU0nI6Q5ydwdQQyNgTID |
+
+### 注意事项
+
+**重要**：当前端页面保存模型配置时，会使用 `config.set` 覆盖整个配置文件，导致 `channels` 和 `plugins` 配置丢失。
+
+如需恢复飞书配置，请手动将上述 `channels` 和 `plugins` 部分添加到配置文件中，或直接复制完整配置示例。

@@ -2,13 +2,13 @@
   "models": {
     "providers": {
       "qwenCustom": {
-        "baseUrl": "https://api.minimaxi.com/v1",
-        "apiKey": "sk-cp-RKMOnCYS37G4jkoh9p6-MPEDHklQPidQCMhIFeoFZcAgF4uC5OHaiCnKt7w9-l82Bt4LE25BaR2zSvTp2Lt1lBpMkhKQus_OClAx6xfsJn6adz0mwbE6yJk",
+        "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+        "apiKey": "sk-sp-c9fc8058dd184f5eb6cf560b04a900b2",
         "api": "openai-completions",
         "models": [
           {
-            "id": "MiniMax-M2.5",
-            "name": "MiniMax-M2.5",
+            "id": "qwen3.5-plus",
+            "name": "qwen3.5-plus",
             "api": "openai-completions",
             "reasoning": false,
             "input": [
@@ -30,7 +30,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "qwenCustom/MiniMax-M2.5"
+        "primary": "qwenCustom/qwen3.5-plus"
       }
     }
   },
@@ -91,6 +91,6 @@
   },
   "meta": {
     "lastTouchedVersion": "2026.3.3",
-    "lastTouchedAt": "2026-03-08T16:03:01.745Z"
+    "lastTouchedAt": "2026-03-09T07:15:56.723Z"
   }
 }
